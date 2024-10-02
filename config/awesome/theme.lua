@@ -33,6 +33,124 @@ theme.border_marked = "#91231c"
 theme.wibar_border_width = dpi(2)
 theme.wibar_border_color = theme.border_normal
 
+-- Wibar
+
+screen.connect_signal("request::desktop_decoration", function(s)
+    -- Each screen has its own tag table.
+    awful.tag({ "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX" }, s, awful.layout.layouts[1])
+
+    -- Create a promptbox for each screen
+    s.mypromptbox = awful.widget.prompt()
+
+    -- Create an imagebox widget which will contain an icon indicating which layout we're using.
+    -- We need one layoutbox per screen.
+    s.mylayoutbox = awful.widget.layoutbox {
+        screen  = s,
+        buttons = {
+            awful.button({ }, 1, function () awful.layout.inc( 1) end),
+            awful.button({ }, 3, function () awful.layout.inc(-1) end),
+            awful.button({ }, 4, function () awful.layout.inc(-1) end),
+            awful.button({ }, 5, function () awful.layout.inc( 1) end),
+        }
+    }
+
+    -- Create a taglist widget
+    s.mytaglist = awful.widget.taglist {
+        screen  = s,
+        filter  = awful.widget.taglist.filter.all,
+        buttons = {
+            awful.button({ }, 1, function(t) t:view_only() end),
+            awful.button({ modkey }, 1, function(t)
+                                            if client.focus then
+                                                client.focus:move_to_tag(t)
+                                            end
+                                        end),
+            awful.button({ }, 3, awful.tag.viewtoggle),
+            awful.button({ modkey }, 3, function(t)
+                                            if client.focus then
+                                                client.focus:toggle_tag(t)
+                                            end
+                                        end),
+            awful.button({ }, 4, function(t) awful.tag.viewprev(t.screen) end),
+            awful.button({ }, 5, function(t) awful.tag.viewnext(t.screen) end),
+        }
+    }
+    -- Create a tasklist widget
+	s.mytasklist = awful.widget.tasklist {
+	    screen   = s,
+	    filter   = awful.widget.tasklist.filter.currenttags,
+	    buttons  = tasklist_buttons,
+	    layout   = {
+	        spacing_widget = {
+	            {
+	                forced_width  = 5,
+	                forced_height = 24,
+	                thickness     = 1,
+	                color         = "#77777700",
+	                widget        = wibox.widget.separator
+	            },
+	            valign = "center",
+	            halign = "center",
+	            widget = wibox.container.place,
+	        },
+	        spacing = 1,
+	        layout  = wibox.layout.fixed.horizontal
+	    },
+	    -- Notice that there is *NO* wibox.wibox prefix, it is a template,
+	    -- not a widget instance.
+	    widget_template = {
+	           nil,
+	           {
+	             {
+	              {
+	                id = "clienticon",
+	                widget = awful.widget.clienticon,
+	                valign = 'center',
+	              },
+	              id = "icon_margin_role",
+	              widget = wibox.container.margin,
+	            },
+	            valign = 'center',
+	            halign = 'center',
+	            widget = wibox.container.place,
+	          },
+	          {
+	            forced_height = 5,
+	            id            = "background_role",
+	            widget        = wibox.container.background,
+	          },
+	          forced_height = 50,
+	          create_callback = function(self, c, index, objects)
+	              self:get_children_by_id("clienticon")[1].client = c
+	          end,
+		  expand = "none",
+	          layout = wibox.layout.align.vertical,
+	    }
+	}
+    -- Create the wibox
+    s.mywibox = awful.wibar {
+        position = "top",
+		margins  = {top = 8, bottom = 0, left = 8, right = 8},
+		screen   = s,
+        widget   = {
+            layout = wibox.layout.align.horizontal,
+			expand = "none",
+            { -- Left widgets
+                layout = wibox.layout.fixed.horizontal,
+                s.mytaglist,
+                s.mypromptbox,
+            },
+            s.mytasklist, -- Middle widget
+            { -- Right widgets
+                layout = wibox.layout.fixed.horizontal,
+                wibox.widget.systray(),
+		wibox.widget.textclock(" %a %b %d, %I:%M "),
+                s.mylayoutbox,
+            },
+        }
+    }
+end)
+
 -- There are other variable sets
 -- overriding the default one when
 -- defined, the sets are:
